@@ -2,6 +2,7 @@
 
 // Тип для таблицы Users
 export interface User {
+    orders: boolean;
     id: number; // идентификатор пользователя
     username: string; // имя пользователя
     password: string; // пароль
@@ -21,19 +22,21 @@ export interface Status {
 
 // Тип для таблицы Category
 export interface Category {
-    id: number; // идентификатор категории
-    name: string; // название категории
-    isDrink?: boolean; // является ли напитком
+    id: number;
+  name: string;
+  isDrink: boolean;
+  image_url?: string;
 }
 
 // Тип для таблицы Products
 export interface Product {
-    id: number; // идентификатор продукта
-    name: string; // название продукта
-    description?: string; // описание продукта
-    price: number; // цена
-    category: number; // идентификатор категории
-    image_url?: string; // URL изображения
+    toppings: boolean;
+    id: number;
+  name: string;
+  price: number;
+  category: number;
+  description: string;
+  image_url?: string;
 }
 
 // Тип для таблицы Cart
@@ -53,12 +56,17 @@ export interface CartItem {
 
 // Тип для таблицы Orders
 export interface Order {
-    id: number; // идентификатор заказа
-    user_id: number; // идентификатор пользователя
-    total_amount: number; // общая сумма заказа
-    address: string; // адрес
-    status_id: number; // идентификатор статуса
-    created_at: Date; // дата создания
+  id: number;
+  user_id: number;
+  username: string;
+  phone: string;
+  total_amount: string;
+  address: string;
+  status_id: number;
+  status_name: string;
+  created_at: string;
+  delivery_time: string | null;
+  items_count: number;
 }
 
 // Тип для таблицы Order_Items
@@ -78,7 +86,29 @@ export interface Review {
 }
 
 // Тип для таблицы Restaraunts
-export interface Restaraunt {
-    id: number; // идентификатор ресторана
-    address: string; // адрес
+export interface Restaurant {
+  id: number;
+  name: string;
+  address: string;
+  phone: string;
+  coordinates: [number, number]; // [широта, долгота]
+  openingHours: string;
+  image: string;
+}
+
+
+export interface Promotion {
+  id?: number
+  title: string
+  description: string
+  image_url: string
+  is_active: boolean
+  discount_percent: number
+  start_date?: Date | null
+  end_date?: Date | null
+}
+
+export interface PromotionFormProps {
+  promotion?: Promotion
+  onSubmit: (data: Promotion) => Promise<void> | void
 }

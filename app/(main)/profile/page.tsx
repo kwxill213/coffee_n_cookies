@@ -1,5 +1,5 @@
 "use client"
-import { User } from '@/lib/definitions';
+import { Order, User } from '@/lib/definitions';
 import { useAuth } from '@/lib/hooks/useAuth';
 import axios from 'axios';
 import Link from 'next/link';
@@ -13,6 +13,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+
+const statusColors: Record<number, string> = {
+  1: "bg-blue-100 text-blue-800",
+  2: "bg-yellow-100 text-yellow-800",
+  3: "bg-green-100 text-green-800",
+  4: "bg-red-100 text-red-800",
+};
 
 const ProfilePage = () => {
   const { logout, isAdmin, isAuthenticated, phone } = useAuth();
@@ -24,28 +32,44 @@ const ProfilePage = () => {
   });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+  const [visibleOrders, setVisibleOrders] = useState(2);
+const showMoreOrders = () => setVisibleOrders(prev => prev + 4);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await axios.get(`/api/user/${phone}`);
-        setUser(response.data.user);
-        setEditedData({
-          username: response.data.user.username,
-          gender: response.data.user.gender
-        });
-        if (response.data.user.avatar) {
-          setAvatarPreview(response.data.user.avatar);
-        }
-      } catch (error) {
-        console.error('Ошибка получения данных пользователя', error);
+useEffect(() => {
+  const fetchUserData = async () => {
+    try {
+      const response = await axios.get(`/api/user/${phone}`, {
+        params: { withOrders: true }
+      });
+      
+      // Убедимся, что данные сохраняются полностью
+      const userData = {
+        ...response.data.user,
+        orders: response.data.orders || [] // Добавляем заказы в объект пользователя
+      };
+      
+      setUser(userData);
+      setEditedData({
+        username: userData.username,
+        gender: userData.gender,
+      });
+      
+      if (userData.image_url) {
+        setAvatarPreview(userData.image_url);
       }
-    };
-    if (phone) {
-      fetchUserData();
+      
+      console.log('Полученные данные:', userData); // Для отладки
+    } catch (error) {
+      console.error('Ошибка получения данных пользователя', error);
     }
-  }, [phone]);
+  };
+  
+  if (phone) {
+    fetchUserData();
+  }
+}, [phone]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -55,8 +79,27 @@ const ProfilePage = () => {
     }
   };
 
+  const uploadImage = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await axios.post('/api/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      return response.data.imageUrl;
+    } catch (error) {
+      console.error('Ошибка загрузки изображения:', error);
+      throw error;
+    }
+  };
+
   const handleSave = async () => {
     try {
+      setIsUploading(true);
       const formData = new FormData();
       formData.append('username', editedData.username);
       formData.append('gender', 
@@ -64,8 +107,10 @@ const ProfilePage = () => {
         editedData.gender ? 'true' : 'false'
       );
       
+      // Если выбрано новое изображение, загружаем его
       if (avatarFile) {
-        formData.append('avatar', avatarFile);
+        const imageUrl = await uploadImage(avatarFile);
+        formData.append('image_url', imageUrl);
       }
   
       const response = await axios.put(`/api/user/${phone}`, formData, {
@@ -87,6 +132,8 @@ const ProfilePage = () => {
         variant: "destructive",
       });
       console.error('Ошибка обновления данных:', error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -160,30 +207,30 @@ const ProfilePage = () => {
                   <p className="mt-1 text-lg">{user?.phone || 'Не указан'}</p>
                 </div>
                 <div>
-  <Label>Пол</Label>
-  {isEditing ? (
-    <Select
-      value={editedData.gender === null ? "null" : editedData.gender ? "true" : "false"}
-      onValueChange={(value) => setEditedData({
-        ...editedData,
-        gender: value === "null" ? null : value === "true"
-      })}
-    >
-      <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="Выберите пол" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="null">Не указан</SelectItem>
-        <SelectItem value="true">Мужской</SelectItem>
-        <SelectItem value="false">Женский</SelectItem>
-      </SelectContent>
-    </Select>
-  ) : (
-    <p className="mt-1 text-lg capitalize">
-      {user?.gender === null ? 'Не указан' : user?.gender ? 'Мужской' : 'Женский'}
-    </p>
-  )}
-</div>
+                  <Label>Пол</Label>
+                  {isEditing ? (
+                    <Select
+                      value={editedData.gender === null ? "null" : editedData.gender ? "true" : "false"}
+                      onValueChange={(value) => setEditedData({
+                        ...editedData,
+                        gender: value === "null" ? null : value === "true"
+                      })}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Выберите пол" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="null">Не указан</SelectItem>
+                        <SelectItem value="true">Мужской</SelectItem>
+                        <SelectItem value="false">Женский</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="mt-1 text-lg capitalize">
+                      {user?.gender === null ? 'Не указан' : user?.gender ? 'Мужской' : 'Женский'}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="space-y-4">
                 <div>
@@ -205,9 +252,72 @@ const ProfilePage = () => {
                   </p>
                 </div>
               </div>
+              
             </div>
           </CardContent>
 
+                    <CardContent>
+                      <div className="mt-8">
+  <h2 className="text-xl font-semibold mb-4">История заказов</h2>
+  {!user ? (
+    <p>Загрузка данных...</p>
+  ) : user.orders && Array.isArray(user.orders) && user.orders.length > 0 ? (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+        {user.orders.slice(0, visibleOrders).map((order) => (
+          <Card key={order.id} className="hover:shadow-md transition-shadow flex flex-col h-full">
+            <CardHeader className="p-4 pb-2 flex-grow">
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-lg">Заказ #{order.id}</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {format(new Date(order.created_at), 'dd MMM yyyy, HH:mm', { locale: ru })}
+                  </p>
+                </div>
+                <Badge className={`text-xs ${statusColors[order.status_id] || "bg-gray-100 text-gray-800"}`}>
+                  {order.status_name}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 py-2">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">{order.total_amount} ₽</span>
+                <div className="flex items-center gap-2">
+
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="p-4 pt-0">
+              <Button 
+                asChild 
+                variant="outline" 
+                size="sm" 
+                className="w-full hover:bg-amber-50 border-amber-200"
+              >
+                <Link href={`/orders/${order.id}`}>Подробнее</Link>
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+      {user.orders.length > visibleOrders && (
+        <div className="mt-6 text-center">
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={showMoreOrders}
+            className="border-amber-300 text-amber-800 hover:bg-amber-50"
+          >
+            Показать еще ({user.orders.length - visibleOrders})
+          </Button>
+        </div>
+      )}
+    </>
+  ) : (
+    <p className="text-muted-foreground">У вас пока нет заказов</p>
+  )}
+</div>
+                    </CardContent>
           <CardFooter className="flex justify-between bg-coffee-200 px-6 py-4">
             <div className="flex gap-2">
               {isAdmin && (
@@ -217,10 +327,13 @@ const ProfilePage = () => {
               )}
               {isEditing ? (
                 <>
-                  <Button onClick={handleSave}>Сохранить</Button>
+                  <Button onClick={handleSave} disabled={isUploading}>
+                    {isUploading ? 'Сохранение...' : 'Сохранить'}
+                  </Button>
                   <Button 
                     variant="outline" 
                     onClick={() => setIsEditing(false)}
+                    disabled={isUploading}
                   >
                     Отмена
                   </Button>
@@ -237,6 +350,7 @@ const ProfilePage = () => {
             <Button 
               onClick={logout}
               variant="destructive"
+              disabled={isUploading}
             >
               Выйти из системы
             </Button>

@@ -11,7 +11,8 @@ export const usersTable = mysqlTable('Users', {
   phone: varchar('phone', {length: 20}).unique(),
   adress: varchar('adress', { length: 255}),
   isAdmin: boolean('isAdmin').notNull().default(false),
-  created_at: datetime('created_at').default(new Date())
+  created_at: datetime('created_at').default(new Date()),
+  image_url: varchar('image_url', { length: 255 }),
 });
 
 // Таблица Status
@@ -25,6 +26,7 @@ export const categoryTable = mysqlTable('Category', {
     id: int('id').primaryKey().autoincrement().notNull(),
     name: varchar('name', {length: 100}).unique(),
     isDrink: boolean('isDrink'),
+    image_url: varchar('image_url', { length: 255 }),
 });
 
 // Таблица Products
@@ -52,14 +54,16 @@ export const cartItemsTable = mysqlTable('Cart_Items', {
     quantity: int('quantity').notNull(),
 });
 
-// Таблица Orders
+// таблица Orders
 export const ordersTable = mysqlTable('Orders', {
-    id: int('id').primaryKey().autoincrement().notNull(),
-    user_id: int('user_id').notNull().references(() => usersTable.id),
-    total_amount: decimal('total_amount', { precision: 10, scale: 2 }).notNull(),
-    address: varchar('address', { length: 255 }).notNull(),
-    status_id: int('status_id').notNull().references(() => statusTable.id),
-    created_at: datetime('created_at').default(new Date()),
+  id: int('id').primaryKey().autoincrement().notNull(),
+  user_id: int('user_id').notNull().references(() => usersTable.id),
+  restaurant_id: int('restaurant_id').references(() => restaurantsTable.id),
+  total_amount: decimal('total_amount', { precision: 10, scale: 2 }).notNull(),
+  address: varchar('address', { length: 255 }),
+  status_id: int('status_id').notNull().references(() => statusTable.id),
+  created_at: datetime('created_at').default(new Date()),
+  delivery_time: datetime('delivery_time'),
 });
 
 // Таблица Order_Items
@@ -78,16 +82,67 @@ export const reviewTable = mysqlTable('Reviews', {
     quantity: int('quantity').notNull(),
 });
 
-// Таблица Restaraunts
-export const restarauntsTable = mysqlTable('Restaraunts', {
-    id: int('id').primaryKey().autoincrement().notNull(),
-    address: varchar('address', {length: 255}).notNull(),
+// Таблица Restaurants
+export const restaurantsTable = mysqlTable('Restaurants', {
+  id: int('id').primaryKey().autoincrement().notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  address: varchar('address', { length: 255 }).notNull(),
+  phone: varchar('phone', { length: 20 }).notNull(),
+  coordinateX: decimal('coordinateX', { precision: 10, scale: 7 }).notNull(), // Широта для карты
+  coordinateY: decimal('coordinateY', { precision: 10, scale: 7 }).notNull(), // Долгота для карты
+  opening_time: varchar('opening_time', { length: 5 }).notNull(), // Формат "HH:MM"
+  closing_time: varchar('closing_time', { length: 5 }).notNull(), // Формат "HH:MM"
+  image_url: varchar('image_url', { length: 255 }),
+  description: varchar('description', { length: 500 }),
+  is_active: boolean('is_active').notNull().default(true), // Активен ли ресторан
+  delivery_radius: int('delivery_radius').notNull().default(5000), // Радиус доставки в метрах
 });
+
+// Таблица Promotions
+export const promotionsTable = mysqlTable('Promotions', {
+  id: int('id').primaryKey().autoincrement().notNull(),
+  title: varchar('title', { length: 100 }).notNull(),
+  description: varchar('description', { length: 500 }).notNull(),
+  image_url: varchar('image_url', { length: 255 }).notNull(),
+  start_date: datetime('start_date'),
+  end_date: datetime('end_date'),
+  is_active: boolean('is_active').notNull().default(true),
+  discount_percent: int('discount_percent'),
+  product_id: int('product_id').references(() => productsTable.id),
+  category_id: int('category_id').references(() => categoryTable.id),
+  created_at: datetime('created_at').default(new Date()),
+  conditions: varchar('conditions', { length: 500 }), // дополнительные условия
+});
+
+
+export const promotionsRelations = relations(promotionsTable, ({ one }) => ({
+  product: one(productsTable, {
+    fields: [promotionsTable.product_id],
+    references: [productsTable.id],
+  }),
+  category: one(categoryTable, {
+    fields: [promotionsTable.category_id],
+    references: [categoryTable.id],
+  }),
+}));
+
+
+export const restaurantsRelations = relations(restaurantsTable, ({ many }) => ({
+  orders: many(ordersTable),
+}));
 
 // Определение связей
 export const usersRelations = relations(usersTable, ({ many }) => ({
     carts: many(cartTable),
     orders: many(ordersTable),
+}));
+
+// Обновите связи для ordersTable
+export const ordersRelations = relations(ordersTable, ({ one, many }) => ({
+  user: one(usersTable, { fields: [ordersTable.user_id], references: [usersTable.id] }),
+  restaurant: one(restaurantsTable, { fields: [ordersTable.restaurant_id], references: [restaurantsTable.id] }), // Добавлено
+  status: one(statusTable, { fields: [ordersTable.status_id], references: [statusTable.id] }),
+  items: many(orderItemsTable),
 }));
 
 export const cartsRelations = relations(cartTable, ({ one, many }) => ({

@@ -11,7 +11,7 @@ import {
   ordersTable,
   orderItemsTable,
   reviewTable,
-  restarauntsTable
+  restaurantsTable
 } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -25,7 +25,7 @@ const tableMap: Record<string, any> = {
   'Orders': ordersTable,
   'Order_Items': orderItemsTable,
   'Reviews': reviewTable,
-  'Restaraunts': restarauntsTable
+  'Restaraunts': restaurantsTable
 };
 
 export async function GET(

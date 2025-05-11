@@ -3,7 +3,7 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { redirect, usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Table, MessageSquare, Headphones, LogOut } from 'lucide-react';
+import { LayoutDashboard, Table, MessageSquare, Headphones, ListOrdered, LogOut } from 'lucide-react';
 import { useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 
@@ -37,6 +37,12 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
       href: '/admin/support',
       icon: <Headphones className="h-5 w-5" />,
       active: pathname.startsWith('/admin/support')
+    },
+    {
+      name: 'Заказы',
+      href: '/admin/orders',
+      icon: <ListOrdered className="h-5 w-5" />,
+      active: pathname.startsWith('/admin/orders')
     }
   ];
 

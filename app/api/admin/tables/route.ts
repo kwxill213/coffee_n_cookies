@@ -1,18 +1,6 @@
 // app/api/admin/tables/route.ts
 import { NextResponse } from 'next/server';
 import db from '@/db';
-import { 
-  usersTable,
-  statusTable,
-  categoryTable,
-  productsTable,
-  cartTable,
-  cartItemsTable,
-  ordersTable,
-  orderItemsTable,
-  reviewTable,
-  restarauntsTable
-} from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 
 // Вспомогательная функция для обработки ошибок
@@ -37,7 +25,8 @@ export async function GET() {
       { name: 'Orders', description: 'Заказы' },
       { name: 'Order_Items', description: 'Элементы заказов' },
       { name: 'Reviews', description: 'Отзывы' },
-      { name: 'Restaraunts', description: 'Рестораны' }
+      { name: 'Restaraunts', description: 'Рестораны' },
+      { name: 'Promotions', description: 'Акции' }
     ];
 
     return NextResponse.json({ tables: tablesMeta });

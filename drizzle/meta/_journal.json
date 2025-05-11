@@ -15,6 +15,48 @@
       "when": 1740131054780,
       "tag": "0001_oval_next_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1746802643563,
+      "tag": "0002_lonely_albert_cleary",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1746803478637,
+      "tag": "0003_lean_swordsman",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1746872035938,
+      "tag": "0004_flat_sprite",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1746877455532,
+      "tag": "0005_slimy_black_bolt",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1746882793898,
+      "tag": "0006_red_wolf_cub",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1746963061296,
+      "tag": "0007_living_shotgun",
+      "breakpoints": true
     }
   ]
 }

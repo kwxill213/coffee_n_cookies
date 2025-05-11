@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Edit, Trash2, Save, X, ChevronLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@radix-ui/react-select';
 
 type DataTable = {
   id: number;
@@ -22,8 +24,9 @@ export default function TablesPage() {
   const [editData, setEditData] = useState<Record<string, any> | null>(null);
   const [newRowData, setNewRowData] = useState<Record<string, any> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const [relatedTablesData, setRelatedTablesData] = useState<Record<string, any[]>>({});
 
-  // Загрузка таблиц при монтировании
   useEffect(() => {
     const fetchTables = async () => {
       try {
@@ -33,7 +36,7 @@ export default function TablesPage() {
         setTables(tablesMeta.map((table: any) => ({
           id: table.name,
           name: table.name,
-          recordCount: 0, // Временно 0, загрузим при открытии
+          recordCount: 0,
           columns: [],
           data: []
         })));
@@ -62,7 +65,7 @@ export default function TablesPage() {
           ...table,
           data: data.map((row: any) => ({
             ...row,
-            id: String(row.id),  // Приводим id к строке
+            id: String(row.id),
           })),
           recordCount: data.length,
           columns: data.length > 0 ? Object.keys(data[0]) : []
@@ -104,7 +107,6 @@ export default function TablesPage() {
     if (!selectedTable || !editingRow || !editData) return;
     
     try {
-      // Фильтруем данные для отправки
       const dataToUpdate = selectedTable.columns.reduce((acc, column) => {
         if (editData[column] !== undefined) {
           acc[column] = editData[column];
@@ -186,17 +188,13 @@ export default function TablesPage() {
     if (!selectedTable || !newRowData) return;
     
     try {
-      // Очищаем данные от пустых значений и преобразуем их
       const dataToSend = Object.keys(newRowData).reduce((acc, key) => {
-        // Пропускаем id, так как он автоинкрементный
         if (key === 'id') return acc;
-        
-        // Преобразуем пустые строки в null
         acc[key] = newRowData[key] === '' ? null : newRowData[key];
         return acc;
       }, {} as Record<string, any>);
   
-      const response = await fetch(`/api/admin/tables/${selectedTable.name}`, { // Используем name вместо id
+      const response = await fetch(`/api/admin/tables/${selectedTable.name}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dataToSend)
@@ -231,6 +229,194 @@ export default function TablesPage() {
         variant: "destructive",
       });
     }
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка загрузки изображения');
+      }
+
+      const { imageUrl } = await response.json();
+      return imageUrl;
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить изображение",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>, column: string, isNewRow: boolean = false) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const imageUrl = await uploadImage(file);
+
+      if (imageUrl) {
+        if (isNewRow && newRowData) {
+          setNewRowData({
+            ...newRowData,
+            [column]: imageUrl
+          });
+        } else if (editData) {
+          setEditData({
+            ...editData,
+            [column]: imageUrl
+          });
+        }
+      }
+    }
+  };
+
+  const loadRelatedTableData = async (tableName: string) => {
+    try {
+      const res = await fetch(`/api/admin/tables/${tableName}`);
+      if (!res.ok) throw new Error('Ошибка загрузки');
+      const { data } = await res.json();
+      setRelatedTablesData(prev => ({ ...prev, [tableName]: data }));
+    } catch (error) {
+      console.error('Ошибка загрузки связанной таблицы:', error);
+    }
+  };
+
+  const renderCellContent = (row: any, column: string) => {
+    if (column === 'image_url' && row[column]) {
+      return (
+        <div className="relative w-16 h-16">
+          <Image
+            src={row[column]}
+            alt="Image"
+            fill
+            className="object-cover rounded"
+            unoptimized 
+          />
+        </div>
+      );
+    }
+    return String(row[column]);
+  };
+
+  const renderEditableCell = (column: string, isNewRow: boolean = false) => {
+    if (column === 'image_url') {
+      return (
+        <div className="relative">
+          <input
+            type="file"
+            id={`file-upload-${column}`}
+            className="hidden"
+            accept="image/*"
+            onChange={(e) => handleImageChange(e, column, isNewRow)}
+          />
+          <label
+            htmlFor={`file-upload-${column}`}
+            className="cursor-pointer border rounded p-1 flex items-center justify-center text-sm"
+          >
+            {isUploading ? 'Загрузка...' : 'Выбрать изображение'}
+          </label>
+          {(isNewRow ? newRowData?.[column] : editData?.[column]) && (
+            <div className="mt-2 relative w-16 h-16">
+              <Image
+                src={(isNewRow ? newRowData?.[column] : editData?.[column]) as string}
+                alt="Preview"
+                fill
+                className="object-cover rounded"
+                unoptimized
+              />
+            </div>
+          )}
+        </div>
+      );
+    }
+    if (column === 'category') {
+      const relatedTable = 'Category';
+      
+      if (!relatedTablesData[relatedTable] && !relatedTablesData[`${relatedTable}_error`]) {
+        loadRelatedTableData(relatedTable);
+        return <div className="text-sm text-gray-500">Загрузка категорий...</div>;
+      }
+    
+      if (relatedTablesData[`${relatedTable}_error`]) {
+        return <div className="text-red-500 text-sm">Ошибка загрузки</div>;
+      }
+    
+      // Находим выбранную категорию для отображения
+      const selectedValue = isNewRow ? newRowData?.[column] : editData?.[column];
+      const selectedCategory = relatedTablesData[relatedTable]?.find(
+        item => item.id === selectedValue
+      );
+    
+      return (
+        <div className="flex flex-col gap-2">
+          {/* Поле с выбранным значением */}
+          {selectedValue && (
+            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
+              <span>{selectedCategory?.name || `ID: ${selectedValue}`}</span>
+            </div>
+          )}
+          
+          {/* Выпадающий список */}
+          <Select
+            value={selectedValue || ''}
+            onValueChange={(value) => {
+              if (isNewRow && newRowData) {
+                setNewRowData({ ...newRowData, [column]: value });
+              } else if (editData) {
+                setEditData({ ...editData, [column]: value });
+              }
+            }}
+          >
+            <SelectTrigger className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-amber-500">
+              <SelectValue placeholder="Выберите категорию" />
+            </SelectTrigger>
+            <SelectContent className="z-50 mt-1 w-full bg-white shadow-lg rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm max-h-60 overflow-auto">
+              {relatedTablesData[relatedTable]?.map(item => (
+                <SelectItem 
+                  key={item.id}
+                  value={item.id}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                >
+                  <span className="block truncate">
+                    {item.name || `Категория ${item.id}`}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      );
+    }
+    return (
+      <Input
+        value={(isNewRow ? newRowData?.[column] : editData?.[column]) || ''}
+        onChange={(e) => {
+          if (isNewRow && newRowData) {
+            setNewRowData({
+              ...newRowData,
+              [column]: e.target.value
+            });
+          } else if (editData) {
+            setEditData({
+              ...editData,
+              [column]: e.target.value
+            });
+          }
+        }}
+        className="h-8"
+      />
+    );
   };
 
   if (isLoading && !selectedTable) {
@@ -294,16 +480,7 @@ export default function TablesPage() {
                     <TableRow>
                       {selectedTable.columns.map(column => (
                         <TableCell key={`new-${column}`}>
-                          <Input
-                            value={newRowData[column] || ''}
-                            onChange={(e) => 
-                              setNewRowData({
-                                ...newRowData,
-                                [column]: e.target.value
-                              })
-                            }
-                            className="h-8"
-                          />
+                          {renderEditableCell(column, true)}
                         </TableCell>
                       ))}
                       <TableCell className="flex space-x-2">
@@ -311,6 +488,7 @@ export default function TablesPage() {
                           variant="outline" 
                           size="sm"
                           onClick={saveNewRow}
+                          disabled={isUploading}
                         >
                           <Save className="h-4 w-4" />
                         </Button>
@@ -318,6 +496,7 @@ export default function TablesPage() {
                           variant="outline" 
                           size="sm"
                           onClick={() => setNewRowData(null)}
+                          disabled={isUploading}
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -325,65 +504,58 @@ export default function TablesPage() {
                     </TableRow>
                   )}
 
-{selectedTable.data.map(row => (
-  row?.id !== undefined ? (
-                    <TableRow key={row.id}>
-                      {selectedTable.columns.map(column => (
-                        <TableCell key={`${row.id}-${column}`}>
+                  {selectedTable.data.map(row => (
+                    row?.id !== undefined ? (
+                      <TableRow key={row.id}>
+                        {selectedTable.columns.map(column => (
+                          <TableCell key={`${row.id}-${column}`}>
+                            {editingRow?.rowId === row.id ? (
+                              renderEditableCell(column)
+                            ) : (
+                              renderCellContent(row, column)
+                            )}
+                          </TableCell>
+                        ))}
+                        <TableCell className="flex space-x-2">
                           {editingRow?.rowId === row.id ? (
-                            <Input
-                              value={editData?.[column] || ''}
-                              onChange={(e) => 
-                                setEditData({
-                                  ...editData!,
-                                  [column]: e.target.value
-                                })
-                              }
-                              className="h-8"
-                            />
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={saveEdit}
+                                disabled={isUploading}
+                              >
+                                <Save className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={cancelEdit}
+                                disabled={isUploading}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
                           ) : (
-                            String(row[column])
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => startEdit(row)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => deleteRow(row.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
                         </TableCell>
-                      ))}
-                      <TableCell className="flex space-x-2">
-                        {editingRow?.rowId === row.id ? (
-                          <>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={saveEdit}
-                            >
-                              <Save className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={cancelEdit}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => startEdit(row)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => deleteRow(row.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                      </TableCell>
-                    </TableRow>
+                      </TableRow>
                     ) : null
                   ))}
                 </TableBody>
