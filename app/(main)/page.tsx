@@ -13,24 +13,6 @@ import { Button } from "@/components/ui/button"
 import toast from "react-hot-toast"
 import ProductCard from "../components/home/ProductCard"
 
-const promotions = [
-  {
-    title: "Утренний заряд",
-    description: "Кофе + печенье со скидкой 20% с 8:00 до 11:00",
-    image: "/promo-1.jpg"
-  },
-  {
-    title: "Вторник со скидкой",
-    description: "Каждый вторник -15% на все напитки",
-    image: "/promo-2.jpg"
-  },
-  {
-    title: "Комплимент к кофе",
-    description: "Бесплатное печенье к любому кофе",
-    image: "/promo-3.jpg"
-  }
-]
-
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
@@ -106,7 +88,7 @@ export default function Home() {
       <HeroSection />
       <PromotionsCarousel />
 
-      <section className="bg-coffee-100 rounded-lg shadow-md p-6 md:p-12">
+      <section id="menu-section" className="bg-coffee-100 rounded-lg shadow-md p-6 md:p-12">
         <h2 className="text-4xl font-semibold text-center mb-12 text-coffee-700">
           {selectedCategory ? (
             <div className="flex items-center justify-center">

@@ -16,13 +16,13 @@ export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart()
   const { phone, isAuthenticated, logout } = useAuth()
   const router = useRouter()
-
   const [deliveryMethod, setDeliveryMethod] = useState<'delivery' | 'pickup'>('delivery')
   const [address, setAddress] = useState('')
   const [selectedRestaurant, setSelectedRestaurant] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [restaurants, setRestaurants] = useState([])
   const [restaurantsLoading, setRestaurantsLoading] = useState(false)
+  const [activePromotions, setActivePromotions] = useState<any[]>([])
 
   // Загружаем адрес пользователя при монтировании
   useEffect(() => {
@@ -39,6 +39,19 @@ export default function CartPage() {
     }
   }, [isAuthenticated, phone])
 
+  // Загружаем активные акции при монтировании
+  useEffect(() => {
+    const fetchActivePromotions = async () => {
+      try {
+        const response = await axios.get('/api/promotions/active')
+        setActivePromotions(response.data)
+      } catch (error) {
+        console.error('Ошибка при загрузке акций:', error)
+      }
+    }
+    fetchActivePromotions()
+  }, [])
+
   const fetchRestaurants = async () => {
     try {
       setRestaurantsLoading(true)
@@ -51,84 +64,98 @@ export default function CartPage() {
     }
   }
 
-  const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  // Расчет общей суммы с учетом скидок
+  const totalAmount = cart.reduce((sum, item) => {
+    const promotion = activePromotions.find(p => p.product_id === item.id)
+    if (promotion?.discount_percent) {
+      return sum + (item.price * (1 - promotion.discount_percent / 100) * item.quantity)
+    }
+    return sum + (item.price * item.quantity)
+  }, 0)
 
   const handleCheckout = async () => {
-  if (!isAuthenticated) {
-    toast.error('Пожалуйста, авторизуйтесь')
-    return router.push('/login')
-  }
-
-  try {
-    setIsLoading(true)
-
-    // Всегда обновляем адрес пользователя, если он изменился
-    if (address.trim()) {
-      await axios.patch(`/api/user/${phone}`, { address }, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
+    if (!isAuthenticated) {
+      toast.error('Пожалуйста, авторизуйтесь')
+      return router.push('/login')
     }
 
-    // Валидация в зависимости от способа получения
-    if (deliveryMethod === 'delivery' && !address.trim()) {
-      return toast.error('Укажите адрес доставки')
-    }
+    try {
+      setIsLoading(true)
 
-    if (deliveryMethod === 'pickup' && !selectedRestaurant) {
-      return toast.error('Выберите ресторан для самовывоза')
-    }
-
-    // Создаем заказ
-    const orderData = {
-      deliveryMethod,
-      address: deliveryMethod === 'delivery' ? address : null,
-      restaurantId: deliveryMethod === 'pickup' ? selectedRestaurant : null,
-      phone: phone,
-      items: cart.map(item => ({
-        productId: item.id,
-        quantity: item.quantity,
-        price: item.price
-      }))
-    }
-
-    const response = await axios.post('/api/orders', orderData)
-
-    clearCart(phone)
-    const estimatedTime = deliveryMethod === 'delivery' ? '30-45 минут' : '15-20 минут'
-
-    toast.success(
-      <div>
-        <p>Заказ успешно оформлен!</p>
-        <p>Примерное время: {estimatedTime}</p>
-      </div>,
-      { duration: 5000 }
-    )
-
-    router.push(`/orders/${response.data.orderId}`)
-  } catch (error) {
-    console.error('Ошибка при оформлении заказа:', error)
-    toast.error('Не удалось оформить заказ')
-    
-    if (axios.isAxiosError(error)) {
-      if (error.response?.status === 401) {
-        logout()
-      } else if (error.response?.data?.message) {
-        toast.error(error.response.data.message)
+      // Всегда обновляем адрес пользователя, если он изменился
+      if (address.trim()) {
+        await axios.patch(`/api/user/${phone}`, { address }, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        })
       }
+
+      // Валидация в зависимости от способа получения
+      if (deliveryMethod === 'delivery' && !address.trim()) {
+        return toast.error('Укажите адрес доставки')
+      }
+
+      if (deliveryMethod === 'pickup' && !selectedRestaurant) {
+        return toast.error('Выберите ресторан для самовывоза')
+      }
+
+      // Создаем заказ
+      const orderData = {
+        deliveryMethod,
+        address: deliveryMethod === 'delivery' ? address : null,
+        restaurantId: deliveryMethod === 'pickup' ? selectedRestaurant : null,
+        phone: phone,
+        items: cart.map(item => {
+          const promotion = activePromotions.find(p => p.product_id === item.id)
+          const itemPrice = promotion 
+            ? item.price * (1 - promotion.discount_percent / 100)
+            : item.price
+
+          return {
+            productId: item.id,
+            quantity: item.quantity,
+            price: itemPrice
+          }
+        })
+      }
+
+      const response = await axios.post('/api/orders', orderData)
+
+      clearCart(phone)
+      const estimatedTime = deliveryMethod === 'delivery' ? '30-45 минут' : '15-20 минут'
+
+      toast.success(
+        <div>
+          <p>Заказ успешно оформлен!</p>
+          <p>Примерное время: {estimatedTime}</p>
+        </div>,
+        { duration: 5000 }
+      )
+
+      router.push(`/orders/${response.data.orderId}`)
+    } catch (error) {
+      console.error('Ошибка при оформлении заказа:', error)
+      toast.error('Не удалось оформить заказ')
+      
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          logout()
+        } else if (error.response?.data?.message) {
+          toast.error(error.response.data.message)
+        }
+      }
+    } finally {
+      setIsLoading(false)
     }
-  } finally {
-    setIsLoading(false)
   }
-}
 
   return (
     <div className="container mx-auto px-4 py-8">
-    <div className="flex space-x-10 justify-start">
-      <h1 className="text-3xl font-bold text-coffee-800 mb-8">Корзина</h1>
-      
-</div>
+      <div className="flex space-x-10 justify-start">
+        <h1 className="text-3xl font-bold text-coffee-800 mb-8">Корзина</h1>
+        
+      </div>
       {cart.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-lg text-coffee-600 mb-4">Ваша корзина пуста</p>
@@ -144,54 +171,74 @@ export default function CartPage() {
               <h2 className="text-xl font-semibold text-coffee-800 mb-4">Ваши товары</h2>
               
               <div className="space-y-4">
-                {cart.map(item => (
-                  <div key={item.id} className="flex items-start border-b border-coffee-100 pb-4">
-                    <div className="flex-shrink-0 w-20 h-20 bg-coffee-50 rounded-lg overflow-hidden mr-4">
-                      {item.image_url && (
-                        <img 
-                          src={item.image_url} 
-                          alt={item.name} 
-                          className="w-full h-full object-cover"
-                        />
-                      )}
-                    </div>
-                    
-                    <div className="flex-1">
-                      <h3 className="font-medium text-coffee-800">{item.name}</h3>
-                      <p className="text-coffee-600">{item.price} ₽ × {item.quantity} = {item.price * item.quantity} ₽</p>
+                {cart.map(item => {
+                  const promotion = activePromotions.find(p => p.product_id === item.id)
+                  const itemPrice = promotion 
+                    ? item.price * (1 - promotion.discount_percent / 100)
+                    : item.price
+                  const totalItemPrice = itemPrice * item.quantity
+
+                  return (
+                    <div key={item.id} className="flex items-start border-b border-coffee-100 pb-4">
+                      <div className="flex-shrink-0 w-20 h-20 bg-coffee-50 rounded-lg overflow-hidden mr-4">
+                        {item.image_url && (
+                          <img 
+                            src={item.image_url} 
+                            alt={item.name} 
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
                       
-                      <div className="flex items-center mt-2 space-x-4">
-                        <div className="flex items-center border border-coffee-200 rounded-md">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => updateQuantity(phone || '', item.id, item.quantity - 1)}
-                            disabled={item.quantity <= 1}
-                          >
-                            -
-                          </Button>
-                          <span className="px-2">{item.quantity}</span>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => updateQuantity(phone || '', item.id, item.quantity + 1)}
-                          >
-                            +
-                          </Button>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-coffee-800">{item.name}</h3>
+                        <div className="flex items-center space-x-2">
+                          {promotion ? (
+                            <>
+                              <p className="line-through text-gray-400">{item.price * item.quantity} ₽</p>
+                              <p className="text-coffee-600">{totalItemPrice.toFixed(2)} ₽</p>
+                              <span className="text-sm text-green-600">
+                                -{promotion.discount_percent}%
+                              </span>
+                            </>
+                          ) : (
+                            <p className="text-coffee-600">{totalItemPrice.toFixed(2)} ₽</p>
+                          )}
                         </div>
                         
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-red-500 hover:text-red-600"
-                          onClick={() => removeFromCart(phone || '', item.id)}
-                        >
-                          Удалить
-                        </Button>
+                        <div className="flex items-center mt-2 space-x-4">
+                          <div className="flex items-center border border-coffee-200 rounded-md">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => updateQuantity(phone || '', item.id, item.quantity - 1)}
+                              disabled={item.quantity <= 1}
+                            >
+                              -
+                            </Button>
+                            <span className="px-2">{item.quantity}</span>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => updateQuantity(phone || '', item.id, item.quantity + 1)}
+                            >
+                              +
+                            </Button>
+                          </div>
+                          
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-500 hover:text-red-600"
+                            onClick={() => removeFromCart(phone || '', item.id)}
+                          >
+                            Удалить
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -264,10 +311,10 @@ export default function CartPage() {
                 )}
 
                 {/* Итоговая сумма */}
-                <div className="border-t border-coffee-200 pt-4">
-                  <div className="flex justify-between font-semibold text-lg">
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  <div className="flex justify-between mb-2">
                     <span>Итого:</span>
-                    <span>{totalAmount} ₽</span>
+                    <span className="font-semibold">{totalAmount.toFixed(2)} ₽</span>
                   </div>
                 </div>
 

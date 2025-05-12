@@ -277,9 +277,9 @@ const Header = () => {
           )}
 
           {/* Корзина */}
-          <button onClick={()=>{window.location.replace("/cart")}}>
-          <CartIndicator />
-          </button>
+          <div className="cursor-pointer" onClick={() => { window.location.href = "/cart" }}>
+            <CartIndicator />
+            </div>
         </div>
 
         {/* Второй уровень */}
@@ -287,10 +287,9 @@ const Header = () => {
           <div className="container mx-auto flex items-center justify-center space-x-8">
             {[
               { name: "Меню доставки", href: "/" },
-              { name: "Рестораны", href: "/restaurants" },
+              { name: "Кофейни", href: "/restaurants" },
               { name: "Акции", href: "/promotions" },
               { name: "О компании", href: "/about" },
-              { name: "Вакансии", href: "/careers" },
               { name: "Контакты", href: "/contacts" }
             ].map((link) => (
               <Link 

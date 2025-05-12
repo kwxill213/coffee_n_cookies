@@ -1,6 +1,4 @@
-import React from 'react';
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { 
   Facebook, 
   Instagram, 
@@ -10,118 +8,89 @@ import {
   Mail 
 } from 'lucide-react';
 
-const socialLinks = [
-  { icon: Facebook, href: "#" },
-  { icon: Instagram, href: "#" },
-  { icon: Twitter, href: "#" }
-];
-
 const Footer = () => {
   return (
-    <footer className="bg-coffee-200 text-coffee-800 py-12">
-      <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="bg-coffee-100 text-coffee-900 py-12">
+      <div className="container mx-auto px-6 max-w-6xl">
+        {/* Основные разделы */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          
           {/* О компании */}
-          <div>
-            <h3 className="text-xl font-bold mb-6 text-coffee-700">О компании</h3>
-            <ul className="space-y-3">
-              {[
-                { name: "О нас", href: "/about" },
-                { name: "Новости", href: "/news" },
-                { name: "Вакансии", href: "/careers" },
-                { name: "Партнеры", href: "/partners" }
-              ].map((link) => (
-                <li key={link.href}>
-                  <Link 
-                    href={link.href} 
-                    className="text-coffee-600 hover:text-coffee-800 transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold border-b border-coffee-300 pb-2">Компания</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/about" className="hover:text-coffee-700 transition-colors">
+                  О нас
+                </Link>
+              </li>
+              <li>
+                <Link href="/contacts" className="hover:text-coffee-700 transition-colors">
+                  Связаться с нами
+                </Link>
+              </li>
             </ul>
           </div>
-
+          
           {/* Меню */}
-          <div>
-            <h3 className="text-xl font-bold mb-6 text-coffee-700">Меню</h3>
-            <ul className="space-y-3">
-              {[
-                { name: "Кофе", href: "/menu/coffee" },
-                { name: "Печенье", href: "/menu/cookies" },
-                { name: "Завтраки", href: "/menu/breakfast" },
-                { name: "Акции", href: "/promotions" }
-              ].map((link) => (
-                <li key={link.href}>
-                  <Link 
-                    href={link.href} 
-                    className="text-coffee-600 hover:text-coffee-800 transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Контакты */}
-          <div>
-            <h3 className="text-xl font-bold mb-6 text-coffee-700">Контакты</h3>
-            <ul className="space-y-3">
-              <li className="flex items-center space-x-3">
-                <MapPin className="text-coffee-600" size={20} />
-                <span className="text-coffee-600">Москва, ул. Кофейная, 12</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <Phone className="text-coffee-600" size={20} />
-                <span className="text-coffee-600">+7 (495) 123-45-67</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <Mail className="text-coffee-600" size={20} />
-                <span className="text-coffee-600">info@coffeencookies.ru</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Подписка и социальные сети */}
-          <div>
-            <h3 className="text-xl font-bold mb-6 text-coffee-700">Будьте с нами</h3>
-            <div className="space-y-6">
-              <div className="flex space-x-4">
-                {socialLinks.map((social, index) => (
-                  <Link 
-                    key={index} 
-                    href={social.href} 
-                    className="text-coffee-600 hover:text-coffee-800 transition-colors"
-                  >
-                    <social.icon size={24} />
-                  </Link>
-                ))}
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold border-b border-coffee-300 pb-2">Меню</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Link href="/" className="block hover:text-coffee-700 transition-colors">
+                  Кофе
+                </Link>
+                <Link href="/" className="block hover:text-coffee-700 transition-colors">
+                  Печенье
+                </Link>
+                <Link href="/" className="block hover:text-coffee-700 transition-colors">
+                  Завтраки
+                </Link>
               </div>
-              
-              <div className="flex space-x-2">
-                <input 
-                  type="email" 
-                  placeholder="Ваш email" 
-                  className="px-3 py-2 rounded-l bg-coffee-100 text-coffee-800 w-full focus:outline-none focus:ring-2 focus:ring-coffee-400"
-                />
-                <Button 
-                  variant="default" 
-                  className="bg-coffee-500 text-white hover:bg-coffee-600 rounded-r"
-                >
-                  Подписаться
-                </Button>
+              <div className="space-y-2">
+                <Link href="/promotions" className="block hover:text-coffee-700 transition-colors">
+                  Акции
+                </Link>
               </div>
             </div>
           </div>
+          
+          {/* Контакты */}
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold border-b border-coffee-300 pb-2">Контакты</h3>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-3">
+                <MapPin className="mt-0.5 flex-shrink-0" size={18} />
+                <span>Москва, ул. Кофейная, 42</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Phone size={18} />
+                <span>+7 (495) 123-45-67</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Mail size={18} />
+                <span>info@coffeencookies.ru</span>
+              </li>
+            </ul>
+          </div>
         </div>
-
-        {/* Нижняя часть футера */}
-        <div className="mt-12 pt-8 border-t border-coffee-300 text-center">
-          <p className="text-coffee-600">
-            {new Date().getFullYear()} Coffee n Cookies. Все права защищены.
-          </p>
+        
+        {/* Социальные сети
+        <div className="flex justify-center gap-6 mb-8">
+          <a href="#" className="text-coffee-700 hover:text-coffee-900">
+            <Facebook size={20} />
+          </a>
+          <a href="#" className="text-coffee-700 hover:text-coffee-900">
+            <Instagram size={20} />
+          </a>
+          <a href="#" className="text-coffee-700 hover:text-coffee-900">
+            <Twitter size={20} />
+          </a>
+        </div> */}
+        
+        {/* Копирайт */}
+        <div className="text-center text-sm border-t border-coffee-300 pt-6">
+          <p>© {new Date().getFullYear()} Coffee n Cookies. Все права защищены.</p>
         </div>
       </div>
     </footer>

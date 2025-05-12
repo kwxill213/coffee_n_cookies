@@ -91,7 +91,7 @@ export async function PATCH(
     if (data.gender !== undefined) {
       updateData.gender = data.gender === null ? null : Boolean(data.gender);
     }
-    if (data.address !== undefined) updateData.adress = data.address; // Учитываем adress с одной d
+    if (data.address !== undefined) updateData.adress = data.address;
     if (data.image_url !== undefined) updateData.image_url = data.image_url;
 
     // Обновляем данные пользователя

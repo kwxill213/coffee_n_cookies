@@ -1,22 +1,14 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import { Restaurant } from '@/lib/definitions';
 import { MapPin, Phone, Clock } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
-// Динамическая загрузка карты
-const MapWithNoSSR = dynamic(
-  () => import('@/app/components/RestarauntMap'),
-  { ssr: false }
-);
-
 export default function RestaurantsPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([55.751244, 37.618423]); // Центр Москвы
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -26,10 +18,8 @@ export default function RestaurantsPage() {
         const response = await axios.get('/api/restaurants');
         setRestaurants(response.data);
         
-        // Если есть рестораны, выбираем первый по умолчанию
         if (response.data.length > 0) {
           setSelectedRestaurant(response.data[0]);
-          setMapCenter(response.data[0].coordinates);
         }
       } catch (error) {
         console.error('Ошибка при загрузке ресторанов:', error);
@@ -44,13 +34,12 @@ export default function RestaurantsPage() {
 
   const handleRestaurantSelect = (restaurant: Restaurant) => {
     setSelectedRestaurant(restaurant);
-    setMapCenter(restaurant.coordinates);
   };
 
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-coffee-800 mb-8">Наши рестораны</h1>
+        <h1 className="text-3xl font-bold text-coffee-800 mb-8">Наши кофейни</h1>
         <p>Загрузка...</p>
       </div>
     );
@@ -58,10 +47,10 @@ export default function RestaurantsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-coffee-800 mb-8">Наши рестораны</h1>
+      <h1 className="text-3xl font-bold text-coffee-800 mb-8">Наши кофейни</h1>
       
       {restaurants.length === 0 ? (
-        <p className="text-coffee-600">Нет доступных ресторанов</p>
+        <p className="text-coffee-600">Нет доступной кофейни</p>
       ) : (
         <>
           <div className="flex flex-col lg:flex-row gap-8">
@@ -71,7 +60,11 @@ export default function RestaurantsPage() {
                 {restaurants.map(restaurant => (
                   <div 
                     key={restaurant.id}
-                    className={`p-4 rounded-lg cursor-pointer transition-colors ${selectedRestaurant?.id === restaurant.id ? 'bg-coffee-100 border-2 border-coffee-300' : 'bg-white hover:bg-coffee-50 border border-coffee-200'}`}
+                    className={`p-4 rounded-lg cursor-pointer transition-colors ${
+                      selectedRestaurant?.id === restaurant.id 
+                        ? 'bg-coffee-100 border-2 border-coffee-300' 
+                        : 'bg-white hover:bg-coffee-50 border border-coffee-200'
+                    }`}
                     onClick={() => handleRestaurantSelect(restaurant)}
                   >
                     <h3 className="font-bold text-lg text-coffee-700">{restaurant.name}</h3>
@@ -83,14 +76,18 @@ export default function RestaurantsPage() {
               </div>
             </div>
 
-            {/* Карта с ресторанами */}
-            <div className="lg:w-2/3 h-[500px] rounded-lg overflow-hidden shadow-lg">
-              <MapWithNoSSR 
-                restaurants={restaurants} 
-                center={mapCenter} 
-                selectedRestaurant={selectedRestaurant}
-                onSelect={handleRestaurantSelect}
-              />
+            {/* Яндекс Карта */}
+            <div className="lg:w-2/3 h-[500px] rounded-lg overflow-hidden shadow-lg bg-coffee-100">
+              {selectedRestaurant && (
+                <iframe 
+                  src={`https://yandex.ru/map-widget/v1/?ll=${selectedRestaurant.coordinates[1]},${selectedRestaurant.coordinates[0]}&z=15&pt=${selectedRestaurant.coordinates[1]},${selectedRestaurant.coordinates[0]},comma`}
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  className="border-0"
+                  allowFullScreen
+                ></iframe>
+              )}
             </div>
           </div>
 

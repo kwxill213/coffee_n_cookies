@@ -125,11 +125,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { table: string, id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ table: string, id: string }> }
 ) {
   try {
-    const { table: tableName, id } = params;
+    const { table: tableName, id } = await context.params;
     const table = tableMap[tableName];
 
     if (!table) {
@@ -139,10 +139,19 @@ export async function DELETE(
       );
     }
 
+    // Преобразуем ID в число с проверкой
+    const recordId = Number(id);
+    if (isNaN(recordId)) {
+      return NextResponse.json(
+        { error: 'Неверный ID записи' },
+        { status: 400 }
+      );
+    }
+
     // Сначала получаем запись, которую будем удалять
     const [toDelete] = await db.select()
       .from(table)
-      .where(eq(table.id, parseInt(id)));
+      .where(eq(table.id, recordId));
 
     if (!toDelete) {
       return NextResponse.json(
@@ -153,12 +162,16 @@ export async function DELETE(
 
     // Удаляем запись
     await db.delete(table)
-      .where(eq(table.id, parseInt(id)));
+      .where(eq(table.id, recordId));
 
     return NextResponse.json({ data: toDelete });
   } catch (error) {
+    console.error('DELETE Error:', error); // Добавляем лог ошибки
     return NextResponse.json(
-      { error: 'Не удалось удалить запись', details: error instanceof Error ? error.message : String(error) },
+      { 
+        error: 'Не удалось удалить запись', 
+        details: error instanceof Error ? error.message : String(error) 
+      },
       { status: 500 }
     );
   }

@@ -42,22 +42,22 @@ export const productsTable = mysqlTable('Products', {
 // Таблица Cart
 export const cartTable = mysqlTable('Cart', {
     id: int('id').primaryKey().autoincrement().notNull(),
-    user_id: int('user_id').notNull().references(() => usersTable.id),
+    user_id: int('user_id').notNull().references(() => usersTable.id, { onDelete: 'cascade' }),
     created_at: datetime('created_at').default(new Date()),
 });
 
 // Таблица Cart_Items
 export const cartItemsTable = mysqlTable('Cart_Items', {
     id: int('id').primaryKey().autoincrement().notNull(),
-    cart_id: int('cart_id').notNull().references(() => cartTable.id),
-    product_id: int('product_id').notNull().references(() => productsTable.id),
+    cart_id: int('cart_id').notNull().references(() => cartTable.id, { onDelete: 'cascade' }),
+    product_id: int('product_id').notNull().references(() => productsTable.id, { onDelete: 'cascade' }),
     quantity: int('quantity').notNull(),
 });
 
-// таблица Orders
+// Таблица Orders
 export const ordersTable = mysqlTable('Orders', {
   id: int('id').primaryKey().autoincrement().notNull(),
-  user_id: int('user_id').notNull().references(() => usersTable.id),
+  user_id: int('user_id').notNull().references(() => usersTable.id, { onDelete: 'cascade' }),
   restaurant_id: int('restaurant_id').references(() => restaurantsTable.id),
   total_amount: decimal('total_amount', { precision: 10, scale: 2 }).notNull(),
   address: varchar('address', { length: 255 }),
@@ -69,7 +69,7 @@ export const ordersTable = mysqlTable('Orders', {
 // Таблица Order_Items
 export const orderItemsTable = mysqlTable('Order_Items', {
     id: int('id').primaryKey().autoincrement().notNull(),
-    order_id: int('order_id').notNull().references(() => ordersTable.id),
+    order_id: int('order_id').notNull().references(() => ordersTable.id, { onDelete: 'cascade' }),
     product_id: int('product_id').notNull().references(() => productsTable.id),
     quantity: int('quantity').notNull(),
 });
@@ -77,7 +77,7 @@ export const orderItemsTable = mysqlTable('Order_Items', {
 // Таблица Reviews
 export const reviewTable = mysqlTable('Reviews', {
     id: int('id').primaryKey().autoincrement().notNull(),
-    order_id: int('order_id').notNull().references(() => ordersTable.id),
+    order_id: int('order_id').notNull().references(() => ordersTable.id, { onDelete: 'cascade' }),
     product_id: int('product_id').notNull().references(() => productsTable.id),
     quantity: int('quantity').notNull(),
 });
@@ -102,16 +102,24 @@ export const restaurantsTable = mysqlTable('Restaurants', {
 export const promotionsTable = mysqlTable('Promotions', {
   id: int('id').primaryKey().autoincrement().notNull(),
   title: varchar('title', { length: 100 }).notNull(),
-  description: varchar('description', { length: 500 }).notNull(),
-  image_url: varchar('image_url', { length: 255 }).notNull(),
-  start_date: datetime('start_date'),
-  end_date: datetime('end_date'),
+  description: varchar('description', { length: 500 }),
+  image_url: varchar('image_url', { length: 255 }),
   is_active: boolean('is_active').notNull().default(true),
   discount_percent: int('discount_percent'),
-  product_id: int('product_id').references(() => productsTable.id),
+  product_id: int('product_id').references(() => productsTable.id, { onDelete: 'cascade' }),
   category_id: int('category_id').references(() => categoryTable.id),
   created_at: datetime('created_at').default(new Date()),
-  conditions: varchar('conditions', { length: 500 }), // дополнительные условия
+  conditions: varchar('conditions', { length: 500 }),
+});
+
+// Таблица ContactMessages
+export const contactMessagesTable = mysqlTable('ContactMessages', {
+  id: int('id').primaryKey().autoincrement().notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  email: varchar('email', { length: 100 }).notNull(),
+  message: varchar('message', { length: 2000 }).notNull(),
+  created_at: datetime('created_at').default(new Date()),
+  is_processed: boolean('is_processed').notNull().default(false),
 });
 
 

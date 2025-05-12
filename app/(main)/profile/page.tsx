@@ -97,45 +97,39 @@ useEffect(() => {
     }
   };
 
-  const handleSave = async () => {
-    try {
-      setIsUploading(true);
-      const formData = new FormData();
-      formData.append('username', editedData.username);
-      formData.append('gender', 
-        editedData.gender === null ? 'null' : 
-        editedData.gender ? 'true' : 'false'
-      );
-      
-      // Если выбрано новое изображение, загружаем его
-      if (avatarFile) {
-        const imageUrl = await uploadImage(avatarFile);
-        formData.append('image_url', imageUrl);
+const handleSave = async () => {
+  try {
+    setIsUploading(true);
+    
+    const imageUrl = avatarFile ? await uploadImage(avatarFile) : undefined;
+    
+    const response = await axios.patch(`/api/user/${phone}`, {
+      username: editedData.username,
+      gender: editedData.gender,
+      image_url: imageUrl
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
       }
-  
-      const response = await axios.put(`/api/user/${phone}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-  
-      setUser(response.data.user);
-      setIsEditing(false);
-      toast({
-        title: "Успешно!",
-        description: "Данные профиля обновлены",
-      });
-    } catch (error) {
-      toast({
-        title: "Ошибка",
-        description: "Не удалось обновить данные",
-        variant: "destructive",
-      });
-      console.error('Ошибка обновления данных:', error);
-    } finally {
-      setIsUploading(false);
-    }
-  };
+    });
+
+    setUser(response.data);
+    setIsEditing(false);
+    toast({
+      title: "Успешно!",
+      description: "Данные профиля обновлены",
+    });
+  } catch (error) {
+    toast({
+      title: "Ошибка",
+      description: "Не удалось обновить данные",
+      variant: "destructive",
+    });
+    console.error('Ошибка обновления данных:', error);
+  } finally {
+    setIsUploading(false);
+  }
+};
 
   if (!isAuthenticated) {
     return (

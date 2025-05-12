@@ -7,8 +7,13 @@ const poolConnection = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   waitForConnections: true,
-  connectionLimit: 10, // Оптимальное количество соединений
-  queueLimit: 0
+  connectionLimit: 30, // Увеличиваем лимит соединений
+  queueLimit: 30, // Добавляем лимит очереди
+  enableKeepAlive: true, // Включаем поддержание соединений
+  keepAliveInitialDelay: 10000, // Начальная задержка для keep-alive (10 секунд)
+  connectTimeout: 10000, // Таймаут подключения (10 секунд)
+  maxIdle: 10, // Максимальное количество простаивающих соединений
+  idleTimeout: 30000 // Таймаут простоя (1 минута)
 });
 const db = drizzle(poolConnection);
 

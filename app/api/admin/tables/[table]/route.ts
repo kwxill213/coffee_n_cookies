@@ -64,7 +64,8 @@ export async function POST(
     const { table } = params;
     const tableSchema = tableMap[table];
     const body = await request.json();
-
+    console.log(body);
+    
     if (!tableSchema) {
       return NextResponse.json(
         { error: 'Таблица не найдена' },

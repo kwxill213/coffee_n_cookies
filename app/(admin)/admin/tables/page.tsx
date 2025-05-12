@@ -148,31 +148,37 @@ export default function TablesPage() {
   };
 
   const deleteRow = async (rowId: number) => {
-    if (!selectedTable) return;
+  if (!selectedTable) return;
+  
+  try {
+    const response = await fetch(`/api/admin/tables/${selectedTable.id}/${rowId}`, {
+      method: 'DELETE'
+    });
     
-    try {
-      await fetch(`/api/admin/tables/${selectedTable.id}/${rowId}`, {
-        method: 'DELETE'
-      });
-      
-      setSelectedTable({
-        ...selectedTable,
-        data: selectedTable.data.filter(row => row.id !== rowId),
-        recordCount: selectedTable.recordCount - 1
-      });
-      
-      toast({
-        title: "Успешно!",
-        description: "Запись удалена",
-      });
-    } catch (error) {
-      toast({
-        title: "Ошибка",
-        description: "Не удалось удалить запись",
-        variant: "destructive",
-      });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Не удалось удалить запись');
     }
-  };
+    
+    setSelectedTable({
+      ...selectedTable,
+      data: selectedTable.data.filter(row => row.id !== rowId),
+      recordCount: selectedTable.recordCount - 1
+    });
+    
+    toast({
+      title: "Успешно!",
+      description: "Запись удалена",
+    });
+  } catch (error) {
+    console.error('Delete error:', error);
+    toast({
+      title: "Ошибка",
+      description: error instanceof Error ? error.message : "Не удалось удалить запись",
+      variant: "destructive",
+    });
+  }
+};
 
   const startAddNewRow = () => {
     if (!selectedTable || selectedTable.columns.length === 0) return;

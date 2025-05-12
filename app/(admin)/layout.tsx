@@ -3,7 +3,7 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { redirect, usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Table, MessageSquare, Headphones, ListOrdered, LogOut } from 'lucide-react';
+import { LayoutDashboard, Table, MessageSquare, Headphones, ListOrdered, LogOut, BadgePercent } from 'lucide-react';
 import { useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 
@@ -26,12 +26,12 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
       icon: <Table className="h-5 w-5" />,
       active: pathname.startsWith('/admin/tables')
     },
-    {
-      name: 'Отзывы',
-      href: '/admin/reviews',
-      icon: <MessageSquare className="h-5 w-5" />,
-      active: pathname.startsWith('/admin/reviews')
-    },
+    // {
+    //   name: 'Отзывы',
+    //   href: '/admin/reviews',
+    //   icon: <MessageSquare className="h-5 w-5" />,
+    //   active: pathname.startsWith('/admin/reviews')
+    // },
     {
       name: 'Поддержка',
       href: '/admin/support',
@@ -43,6 +43,12 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
       href: '/admin/orders',
       icon: <ListOrdered className="h-5 w-5" />,
       active: pathname.startsWith('/admin/orders')
+    },
+    {
+      name: 'Акции',
+      href: '/admin/promotions',
+      icon: <BadgePercent  className="h-5 w-5" />,
+      active: pathname.startsWith('/admin/promotions')
     }
   ];
 

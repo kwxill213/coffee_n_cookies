@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useAuth } from "@/lib/hooks/useAuth"
 import Image from "next/image"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Product } from "@/lib/definitions"
 import { useToast } from "@/hooks/use-toast"
+import axios from 'axios'
 
 interface ProductModalProps {
   product: Product
@@ -24,23 +25,37 @@ export default function ProductModal({
 }: ProductModalProps) {
   const [quantity, setQuantity] = useState(1)
   const [selectedToppings, setSelectedToppings] = useState<any[]>([])
+  const [activePromotions, setActivePromotions] = useState<any[]>([])
   const { phone } = useAuth()
-  const { toast } = useToast();
+  const { toast } = useToast()
 
+  useEffect(() => {
+    const fetchActivePromotions = async () => {
+      try {
+        const response = await axios.get('/api/promotions/active')
+        setActivePromotions(response.data)
+      } catch (error) {
+        console.error('Ошибка при загрузке акций:', error)
+      }
+    }
+
+    if (isOpen) {
+      fetchActivePromotions()
+    }
+  }, [isOpen])
+
+  const promotion = activePromotions.find(p => p.product_id === product.id)
+  const price = promotion 
+    ? product.price * (1 - promotion.discount_percent / 100)
+    : product.price
+  const totalPrice = price * quantity
 
   const incrementQuantity = () => setQuantity(prev => prev + 1)
   const decrementQuantity = () => setQuantity(prev => Math.max(1, prev - 1))
 
-  const toggleTopping = (topping: any) => {
-    setSelectedToppings(prev => 
-      prev.some(t => t.id === topping.id)
-        ? prev.filter(t => t.id !== topping.id)
-        : [...prev, topping]
-    )
-  }
 
   const handleAddToCart = () => {
-if (!phone) {
+    if (!phone) {
       toast({title: "Ошибка",description: "Сначала необходимо авторизоваться!",variant: "destructive",});
       return
     }
@@ -76,7 +91,20 @@ if (!phone) {
             <p className="text-gray-600 mb-4">{product.description}</p>
             
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xl font-bold">₽ {product.price}</span>
+              <div>
+                {promotion ? (
+                  <div className="flex items-center gap-2">
+                    <span className="line-through text-gray-400">₽{product.price}</span>
+                    <span className="text-xl font-bold text-coffee-600">₽{price.toFixed(2)}</span>
+                    <span className="text-sm text-green-600">-{promotion.discount_percent}%</span>
+                  </div>
+                ) : (
+                  <span className="text-xl font-bold">₽{product.price}</span>
+                )}
+                <div className="text-sm text-coffee-600">
+                  Итого: ₽{totalPrice.toFixed(2)}
+                </div>
+              </div>
               
               <div className="flex items-center gap-2">
                 <Button 
@@ -96,7 +124,6 @@ if (!phone) {
                 </Button>
               </div>
             </div>
-
 
             <Button 
               className="w-full" 

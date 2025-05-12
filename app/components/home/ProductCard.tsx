@@ -1,14 +1,14 @@
 // components/products/ProductCard.tsx
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Product } from "@/lib/definitions"
 import ProductModal from "../Modals/ProductModal"
-import toast from "react-hot-toast"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { useToast } from "@/hooks/use-toast"
+import axios from 'axios'
 
 interface ProductCardProps {
   product: Product
@@ -17,14 +17,30 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
-    const { phone } = useAuth()
+  const [activePromotions, setActivePromotions] = useState<any[]>([])
+  const { phone } = useAuth()
   const { toast } = useToast();
 
-  
+  useEffect(() => {
+    const fetchActivePromotions = async () => {
+      try {
+        const response = await axios.get('/api/promotions/active')
+        setActivePromotions(response.data)
+      } catch (error) {
+        console.error('Ошибка при загрузке акций:', error)
+      }
+    }
+    fetchActivePromotions()
+  }, [])
+
+  const promotion = activePromotions.find(p => p.product_id === product.id)
+  const price = promotion 
+    ? product.price * (1 - promotion.discount_percent / 100)
+    : product.price
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation()
-if (!phone) {
+    if (!phone) {
       toast({title: "Ошибка",description: "Сначала необходимо авторизоваться!",variant: "destructive",});
       return
     }
@@ -56,9 +72,19 @@ if (!phone) {
         <div className="flex-1 flex flex-col gap-2">
           <div className="flex justify-between items-start">
             <h3 className="text-xl font-semibold text-coffee-800">{product.name}</h3>
-            <span className="text-xl font-bold text-coffee-600 whitespace-nowrap ml-4">
-              {product.price} ₽
-            </span>
+            <div className="flex items-center gap-2">
+              {promotion ? (
+                <>
+                  <span className="line-through text-gray-400">₽{product.price}</span>
+                  <span className="text-xl font-bold text-coffee-600">₽{price.toFixed(2)}</span>
+                  <span className="text-sm text-green-600">-{promotion.discount_percent}%</span>
+                </>
+              ) : (
+                <span className="text-xl font-bold text-coffee-600 whitespace-nowrap">
+                  ₽{product.price}
+                </span>
+              )}
+            </div>
           </div>
           
           <p className="text-coffee-500 text-sm line-clamp-2">{product.description}</p>

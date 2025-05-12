@@ -177,25 +177,39 @@ export default function OrderPage() {
             <Button variant="outline" asChild>
               <Link href="/profile">К истории заказов</Link>
             </Button>
-            {order.status_id < 4 && (
+            {order.status_id == 1 && (
               <Button 
-                variant="destructive"
-                onClick={async () => {
-                  try {
-                    await axios.patch(`/api/orders/${order.id}/cancel`)
-                    setOrder({
-                      ...order,
-                      status_id: 5,
-                      status_name: 'Отменен'
-                    })
-                    toast.success('Заказ отменен')
-                  } catch (error) {
-                    toast.error('Не удалось отменить заказ')
-                  }
-                }}
-              >
-                Отменить заказ
-              </Button>
+  variant="destructive"
+  onClick={async () => {
+    try {
+      const response = await fetch(`/api/orders/${order.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          statusId: 5 // ID статуса "Отменен"
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to cancel order');
+      }
+
+      setOrder({
+        ...order,
+        status_id: 5,
+        status_name: 'Отменен'
+      });
+      toast.success('Заказ отменен');
+    } catch (error) {
+      toast.error('Не удалось отменить заказ');
+      console.error('Cancel order error:', error);
+    }
+  }}
+>
+  Отменить заказ
+</Button>
             )}
           </CardFooter>
         </Card>
