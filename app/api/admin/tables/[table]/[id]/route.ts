@@ -10,8 +10,8 @@ import {
   cartItemsTable,
   ordersTable,
   orderItemsTable,
-  reviewTable,
-  restaurantsTable
+  restaurantsTable,
+  contactMessagesTable
 } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -24,16 +24,17 @@ const tableMap: Record<string, any> = {
   'Cart_Items': cartItemsTable,
   'Orders': ordersTable,
   'Order_Items': orderItemsTable,
-  'Reviews': reviewTable,
-  'Restaraunts': restaurantsTable
+  'Restaraunts': restaurantsTable,
+  'ContactMessages': contactMessagesTable
+  
 };
 
 export async function GET(
-  request: Request,
-  { params }: { params: { table: string, id: string } }
+  request: NextRequest,
+  context:  { params: Promise<{ table: string, id: string }> }
 ) {
   try {
-    const { table: tableName, id } = params;
+    const { table: tableName, id } = await context.params;
     const table = tableMap[tableName];
     
     if (!table) {

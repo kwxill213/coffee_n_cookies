@@ -87,6 +87,10 @@ export interface Review {
 
 // Тип для таблицы Restaraunts
 export interface Restaurant {
+  image_url: string;
+  description: string;
+  opening_time: string;
+  closing_time: string;
   id: number;
   name: string;
   address: string;

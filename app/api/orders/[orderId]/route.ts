@@ -5,7 +5,6 @@ import { NextResponse } from 'next/server'
 export async function GET(
   req: Request,
   context: { params: Promise<{ orderId: string }> }
-
 ) {
   try {
     const orderId = parseInt((await context.params).orderId)
@@ -63,10 +62,10 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { orderId: string } }
+  context: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const orderId = parseInt(params.orderId)
+    const orderId = parseInt((await context.params).orderId)
     if (isNaN(orderId)) {
       return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 })
     }

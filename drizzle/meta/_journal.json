@@ -78,6 +78,13 @@
       "when": 1747005750656,
       "tag": "0011_third_khan",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1747076978848,
+      "tag": "0012_equal_shinko_yamashiro",
+      "breakpoints": true
     }
   ]
 }

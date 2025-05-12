@@ -1,20 +1,22 @@
 // components/home/MenuSection.tsx
 import { Category, Product } from "@/lib/definitions"
-import CategoryCard from "./CategorySection"
 import ProductCard from "./ProductCard"
+import CategorySection from "./CategorySection"
 
 interface MenuSectionProps {
   selectedCategory: Category | null
   onCategorySelect: (category: Category) => void
   onResetCategory: () => void
   onAddToCart: (product: Product) => void
+  filteredProducts: Product[]
 }
 
 export default function MenuSection({ 
   selectedCategory, 
   onCategorySelect, 
   onResetCategory,
-  onAddToCart
+  onAddToCart,
+  filteredProducts
 }: MenuSectionProps) {
   return (
     <section className="bg-coffee-100 rounded-lg shadow-md p-12">
@@ -29,7 +31,7 @@ export default function MenuSection({
       {selectedCategory ? (
         <div className="grid md:grid-cols-2 gap-12">
           {filteredProducts.length > 0 ? (
-            filteredProducts.map((product) => (
+            filteredProducts.map((product: Product) => ( 
               <ProductCard 
                 key={product.id} 
                 product={product} 
@@ -41,9 +43,11 @@ export default function MenuSection({
           )}
         </div>
       ) : (
-        <CategoryCard 
-          onCategorySelect={onCategorySelect}
-        />
+        <CategorySection 
+        title="Категории" 
+        categories={[]}
+        onSelect={onCategorySelect} 
+/>
       )}
     </section>
   )

@@ -26,12 +26,6 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
       icon: <Table className="h-5 w-5" />,
       active: pathname.startsWith('/admin/tables')
     },
-    // {
-    //   name: 'Отзывы',
-    //   href: '/admin/reviews',
-    //   icon: <MessageSquare className="h-5 w-5" />,
-    //   active: pathname.startsWith('/admin/reviews')
-    // },
     {
       name: 'Поддержка',
       href: '/admin/support',

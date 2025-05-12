@@ -74,13 +74,13 @@ export const orderItemsTable = mysqlTable('Order_Items', {
     quantity: int('quantity').notNull(),
 });
 
-// Таблица Reviews
-export const reviewTable = mysqlTable('Reviews', {
-    id: int('id').primaryKey().autoincrement().notNull(),
-    order_id: int('order_id').notNull().references(() => ordersTable.id, { onDelete: 'cascade' }),
-    product_id: int('product_id').notNull().references(() => productsTable.id),
-    quantity: int('quantity').notNull(),
-});
+// // Таблица Reviews
+// export const reviewTable = mysqlTable('Reviews', {
+//     id: int('id').primaryKey().autoincrement().notNull(),
+//     order_id: int('order_id').notNull().references(() => ordersTable.id, { onDelete: 'cascade' }),
+//     product_id: int('product_id').notNull().references(() => productsTable.id),
+//     quantity: int('quantity').notNull(),
+// });
 
 // Таблица Restaurants
 export const restaurantsTable = mysqlTable('Restaurants', {
@@ -167,5 +167,4 @@ export const productsRelations = relations(productsTable, ({ one, many }) => ({
     category: one(categoryTable, { fields: [productsTable.category], references: [categoryTable.id] }),
     cartItems: many(cartItemsTable),
     orderItems: many(orderItemsTable),
-    reviews: many(reviewTable),
 }));

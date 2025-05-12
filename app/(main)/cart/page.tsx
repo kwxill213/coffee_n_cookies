@@ -11,6 +11,7 @@ import { useCart } from '@/lib/hooks/useCart'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { toast } from 'react-hot-toast'
 import axios from 'axios'
+import { Restaurant } from '@/lib/definitions'
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart()
@@ -20,7 +21,7 @@ export default function CartPage() {
   const [address, setAddress] = useState('')
   const [selectedRestaurant, setSelectedRestaurant] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [restaurants, setRestaurants] = useState([])
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([])
   const [restaurantsLoading, setRestaurantsLoading] = useState(false)
   const [activePromotions, setActivePromotions] = useState<any[]>([])
 
@@ -55,7 +56,7 @@ export default function CartPage() {
   const fetchRestaurants = async () => {
     try {
       setRestaurantsLoading(true)
-      const response = await axios.get('/api/restaurants')
+      const response = await axios.get<Restaurant[]>('/api/restaurants')
       setRestaurants(response.data)
     } catch (error) {
       toast.error('Не удалось загрузить рестораны')

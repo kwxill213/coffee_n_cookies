@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@radix-ui/react-select';
 
 type DataTable = {
-  id: number;
+  id: string;
   name: string;
   recordCount: number;
   columns: string[];

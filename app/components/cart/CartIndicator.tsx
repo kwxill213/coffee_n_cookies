@@ -10,7 +10,7 @@ export const CartIndicator = () => {
   const { cart } = useCart();
   const { phone } = useAuth();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 

@@ -24,9 +24,9 @@ export async function GET() {
       { name: 'Cart_Items', description: 'Элементы корзин' },
       { name: 'Orders', description: 'Заказы' },
       { name: 'Order_Items', description: 'Элементы заказов' },
-      { name: 'Reviews', description: 'Отзывы' },
       { name: 'Restaraunts', description: 'Рестораны' },
-      { name: 'Promotions', description: 'Акции' }
+      { name: 'Promotions', description: 'Акции' },
+      { name: 'ContactMessages', description: 'Обращения' }
     ];
 
     return NextResponse.json({ tables: tablesMeta });

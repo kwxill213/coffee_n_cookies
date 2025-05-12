@@ -155,7 +155,7 @@ export default function AdminOrdersPage() {
                   <TableHead>Статус</TableHead>
                   <TableHead>Дата</TableHead>
                   <TableHead>Товаров</TableHead>
-                  <TableHead>Действия</TableHead>
+                  {/* <TableHead>Действия</TableHead> */}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -204,11 +204,11 @@ export default function AdminOrdersPage() {
                         {format(new Date(order.created_at), 'dd.MM.yyyy HH:mm', { locale: ru })}
                       </TableCell>
                       <TableCell>{order.items_count}</TableCell>
-                      <TableCell>
+                      {/* <TableCell>
                         <Button variant="outline" size="sm">
                           Подробнее
                         </Button>
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))
                 )}

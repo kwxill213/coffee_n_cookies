@@ -1,6 +1,6 @@
 import db from '@/db'
 import { ordersTable, statusTable } from '@/db/schema'
-import { eq, and, lt } from 'drizzle-orm'
+import { eq, and, lt, isNull } from 'drizzle-orm'
 
 export async function updateOrderStatuses() {
   // 1. Находим заказы "В обработке" старше 5 минут
@@ -39,7 +39,7 @@ export async function updateOrderStatuses() {
       .where(eq(ordersTable.status_id, 2))
   }
 
-  // 3. Находим заказы "В пути" старше 30 минут
+  // 3. Находим заказы "В пути" старше 30 минут (только для доставки)
   const deliveringOrders = await db
     .select()
     .from(ordersTable)
@@ -47,7 +47,7 @@ export async function updateOrderStatuses() {
       and(
         eq(ordersTable.status_id, 3),
         lt(ordersTable.created_at, new Date(Date.now() - 30 * 60 * 1000)),
-        eq(ordersTable.restaurant_id, null) // Только для доставки
+        isNull(ordersTable.restaurant_id) // Используем isNull вместо eq(null)
       )
     )
 
@@ -55,7 +55,12 @@ export async function updateOrderStatuses() {
     await db
       .update(ordersTable)
       .set({ status_id: 4 }) // "Доставлен"
-      .where(eq(ordersTable.status_id, 3))
+      .where(
+        and(
+          eq(ordersTable.status_id, 3),
+          isNull(ordersTable.restaurant_id)
+        )
+      )
   }
 }
 
